@@ -1,18 +1,17 @@
 #include <iostream>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 using namespace std;
 class GroupAnswer {
   unordered_set<char> allGivenAnswers;
   vector<unordered_set<char>> personAnswers;
-  public:
+
+ public:
   void addAnswersFromPerson(const string& answers) {
     allGivenAnswers.insert(answers.begin(), answers.end());
     personAnswers.emplace_back(answers.begin(), answers.end());
   }
-  int countAnswered() const {
-    return allGivenAnswers.size();
-  }
+  int countAnswered() const { return allGivenAnswers.size(); }
   int countAnsweredByAll() const {
     int count = 0;
     for (char answer : allGivenAnswers) {
@@ -31,8 +30,8 @@ class GroupAnswer {
 int main() {
   vector<GroupAnswer> groupAnswers;
   GroupAnswer currentGroup;
-  for (string line; getline(cin, line); ) {
-    if (line == "") { // current group ends
+  for (string line; getline(cin, line);) {
+    if (line == "") {  // current group ends
       groupAnswers.push_back(currentGroup);
       currentGroup = GroupAnswer();
       continue;
@@ -45,6 +44,6 @@ int main() {
     sumOfAnswered += groupAnswer.countAnswered();
     sumOfAnsweredByAll += groupAnswer.countAnsweredByAll();
   }
-  cout << "Part 1: " << sumOfAnswered << endl; // 6587
+  cout << "Part 1: " << sumOfAnswered << endl;  // 6587
   cout << "Part 2: " << sumOfAnsweredByAll << endl;
 }

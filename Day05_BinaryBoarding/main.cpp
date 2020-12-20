@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <iostream>
 #include <regex>
-#include <algorithm>
 #include <vector>
 using namespace std;
 int findSeat(int lower, int upper, char takeLower, const string& instructions) {
@@ -14,20 +14,18 @@ int findSeat(int lower, int upper, char takeLower, const string& instructions) {
   }
   return lower;
 }
-int getSeatId(int seatRow, int seatCol) {
-  return seatRow * 8 + seatCol;
-}
+int getSeatId(int seatRow, int seatCol) { return seatRow * 8 + seatCol; }
 int findFirstMissingNumberInSorted(const vector<int>& numbers) {
   for (size_t i = 1; i < numbers.size(); ++i) {
     if (numbers[i - 1] + 1 != numbers[i]) return numbers[i - 1] + 1;
   }
-  return -1; // TODO throw an exception instead
+  return -1;  // TODO throw an exception instead
 }
 int main() {
   regex rg("[FB]{7}[LR]{3}");
   int highestSeatId = numeric_limits<int>::min();
   vector<int> allSeatIds;
-  for (string line; getline(cin, line); ) {
+  for (string line; getline(cin, line);) {
     if (!regex_match(line, rg)) continue;
     int seatRow = findSeat(0, 127, 'F', line.substr(0, 7));
     int seatCol = findSeat(0, 7, 'L', line.substr(7, 3));
