@@ -1,46 +1,66 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
-using two_elem_history = unordered_map<int, pair<int, int>>;
+using ll = long long;
 
-void update_history(two_elem_history& history, int spoken, int idx) {
-  if (history.count(spoken) == 0) {
-    history.emplace(spoken, make_pair(idx, -1));
-  } else {
-    auto old = history[spoken];
-    history[spoken] = make_pair(idx, old.first);
-  }
-}
+class Generator {
+  ll idx;
+  ll last;
+  unordered_map<ll, pair<ll, ll>> history;
 
-int next_spoken(const two_elem_history& history, int spoken) {
-  auto history_p = history.at(spoken);
-  if (history_p.second == -1) {
-    return 0;
+  void update_history(ll elem) {
+    if (history.count(elem) == 0) {
+      history.emplace(elem, make_pair(idx, -1));
+    } else {
+      auto old = history[elem];
+      history[elem] = make_pair(idx, old.first);
+    }
+    last = elem;
+    ++idx;
   }
-  return history_p.first - history_p.second;
-}
+
+  ll next_elem() const {
+    auto history_p = history.at(last);
+    if (history_p.second == -1) {
+      return 0;
+    }
+    return history_p.first - history_p.second;
+  }
+
+  void next() { update_history(next_elem()); }
+
+ public:
+  Generator(const vector<ll>& seed) : idx(0), last(-1) {
+    for (auto elem : seed) {
+      update_history(elem);
+    }
+  }
+
+  ll get_last() const { return last; }
+
+  void generate_until(ll target_idx) {
+    while (idx < target_idx) {
+      next();
+    }
+  }
+};
 
 int main() {
-  int last_spoken = -1;
-  two_elem_history spoken_history;
   string line;
   getline(cin, line);
   cout << "line: " << line << endl;
   istringstream iss(line);
-  int idx = 1;
-  for (string num; getline(iss, num, ','); ++idx) {
-    cout << "num: " << num << endl;
-    last_spoken = stoi(num);
-    cout << "init: " << last_spoken << endl;
-    update_history(spoken_history, last_spoken, idx);
+  vector<ll> seed;
+  for (string num; getline(iss, num, ',');) {
+    seed.push_back(stoi(num));
   }
-  for (; idx <= 2020; ++idx) {
-    cout << "last_spoken: " << idx << " -> " << last_spoken << endl;
-    last_spoken = next_spoken(spoken_history, last_spoken);
-    cout << "next_spoken: " << last_spoken << endl;
-    update_history(spoken_history, last_spoken, idx);
-  }
-  cout << "Part 1: " << last_spoken << endl;
+
+  Generator gen(seed);
+  gen.generate_until(2020);
+  cout << "Part 1: " << gen.get_last() << endl;
+  gen.generate_until(30000000);
+  cout << "Part 2: " << gen.get_last() << endl;
 }
