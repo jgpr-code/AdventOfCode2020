@@ -62,7 +62,8 @@ class Ruleset {
   unordered_map<int, Rule> rules;
 
  public:
-  string GetRegexForRule(const Rule& rule, bool use_part_two) const {
+  string GetRegexForRule(int idx) const {
+    const auto& rule = rules.at(idx);
     string regex_str;
     const auto& targets = rule.GetTargets();
     if (targets.size() > 1) regex_str.push_back('(');
@@ -74,31 +75,43 @@ class Ruleset {
         if (part.index() == 0) {  // part is a char
           regex_str.push_back(get<0>(part));
         } else {  // part is a number
-          regex_str.append(
-              GetRegexForRule(rules.at(get<1>(part)), use_part_two));
+          regex_str.append(GetRegexForRule(get<1>(part)));
         }
       }
     }
     if (targets.size() > 1) regex_str.push_back(')');
-    if (use_part_two) {
-      switch (rule.GetId()) {
-        case 42:
-        case 31:
-          regex_str.push_back('+');
-          break;
-      }
-    }
     return regex_str;
   }
 
   void AddRule(const Rule rule) { rules.emplace(rule.GetId(), rule); }
   Rule GetRule(int idx) const { return rules.at(idx); }
-  string GetRegex(bool use_part_two) const {
-    return GetRegexForRule(rules.at(0), use_part_two);
-  }
 };
 
+namespace match_utils {
+bool MatchesMoreAsThanBsWhenFullyMatched(const string& line, regex a, regex b) {
+  int matched_as = 0;
+  int matched_bs = 0;
+
+  auto begin = line.begin();
+  auto end = line.end();
+  smatch matches;
+  while (regex_search(begin, end, matches, a)) {
+    if (begin != matches[0].first) break;
+    begin = matches[0].second;
+    ++matched_as;
+  }
+  while (regex_search(begin, end, matches, b)) {
+    if (begin != matches[0].first) break;
+    begin = matches[0].second;
+    ++matched_bs;
+  }
+  return begin == end && matched_as > 1 && matched_bs > 0 &&
+         matched_as > matched_bs;
+}
+}  // namespace match_utils
+
 void Test() {
+  cout << "******************** TEST ********************" << endl;
   string a = "abab";
   string b = "cddc";
   string c = "cdcd";
@@ -121,9 +134,11 @@ void Test() {
   Rule other_rule("123: 123 456 | 789 987 65 | 3");
   cout << a_rule << endl;
   cout << other_rule << endl;
+  cout << "******************** END *********************" << endl;
 }
 
 int main() {
+  using namespace match_utils;
   Test();
   string line;
   Ruleset rules;
@@ -132,26 +147,22 @@ int main() {
     rules.AddRule(move(Rule(line)));
   }
 
-  cout << "Rule 42: " << rules.GetRegexForRule(rules.GetRule(42), false)
-       << endl;
-  cout << "Rule 31: " << rules.GetRegexForRule(rules.GetRule(31), false)
-       << endl;
-
-  bool use_part_two = false;
-  string re_str_part1 = rules.GetRegex(use_part_two);
-  use_part_two = true;
-  string re_str_part2 = rules.GetRegex(use_part_two);
-  cout << "regex for part 1:" << endl << re_str_part1 << endl;
-  cout << "regex for part 2:" << endl << re_str_part2 << endl;
-  regex re_part1(re_str_part1);
-  regex re_part2(re_str_part2);
-
+  regex regex_full(rules.GetRegexForRule(0));
+  regex regex_42(rules.GetRegexForRule(42));
+  regex regex_31(rules.GetRegexForRule(31));
   // examine messages
   int count_valid_part1 = 0;
   int count_valid_part2 = 0;
   while (getline(cin, line)) {
-    if (regex_match(line, re_part1)) ++count_valid_part1;
-    if (regex_match(line, re_part2)) ++count_valid_part2;
+    if (regex_match(line, regex_full)) ++count_valid_part1;
+
+    // for the second part:
+    // rule 0: 8 11 and new rules are 8: 42 | 42 8 and 11: 42 31 | 42 11 31
+    // this means to match the new rules we need to have 2+ of 42 and 1+ of 31,
+    // but also there must be more matches of 42 than 31
+    if (MatchesMoreAsThanBsWhenFullyMatched(line, regex_42, regex_31)) {
+      ++count_valid_part2;
+    }
   }
   cout << "Part 1: " << count_valid_part1 << endl;
   cout << "Part 2: " << count_valid_part2 << endl;
